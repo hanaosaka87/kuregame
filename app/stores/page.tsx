@@ -16,12 +16,12 @@ const PREFS = [
 
 // 主要チェーン公式リンク
 const CHAINS = [
-  { name: 'GiGO（ギーゴ）', emoji: '🟣', desc: 'セガグループ運営。全国200店舗以上。新店情報は公式サイトで随時更新。', url: 'https://gigo.amd.co.jp/store/', color: '#6600cc' },
-  { name: 'ラウンドワン', emoji: '🔵', desc: 'スポーツ×アミューズメント複合施設。新店・改装情報を公式で発信。', url: 'https://www.round1.co.jp/shop/', color: '#0055cc' },
+  { name: 'GiGO（ギーゴ）', emoji: '🟣', desc: 'セガグループ運営。全国200店舗以上。新店情報は公式サイトで随時更新。', url: 'https://www.gigo.co.jp/', color: '#6600cc' },
+  { name: 'ラウンドワン', emoji: '🔵', desc: 'スポーツ×アミューズメント複合施設。新店・改装情報を公式で発信。', url: 'https://www.round1.co.jp/', color: '#0055cc' },
   { name: 'タイトーステーション', emoji: '🔴', desc: 'タイトー運営。キャラクター景品が充実。全国各地に展開。', url: 'https://www.taito.co.jp/gc/', color: '#cc0000' },
   { name: 'namco（ナムコ）', emoji: '🟡', desc: 'バンダイナムコ運営。プライズ景品の種類が豊富。', url: 'https://bandainamco-am.co.jp/game_center/', color: '#cc8800' },
-  { name: 'アドアーズ', emoji: '🟢', desc: '東日本・西日本に展開。クレーン台の設定が話題になりやすい。', url: 'https://www.adoors.jp/store/', color: '#008844' },
-  { name: 'モーリーファンタジー', emoji: '🟠', desc: 'イオングループ内に多数展開。ファミリー向け。', url: 'https://www.mf-sega.jp/', color: '#cc5500' },
+  { name: 'アドアーズ', emoji: '🟢', desc: '東日本・西日本に展開。クレーン台の設定が話題になりやすい。', url: 'https://www.adores.jp/', color: '#008844' },
+  { name: 'モーリーファンタジー', emoji: '🟠', desc: 'イオングループ内に多数展開。ファミリー向け。', url: 'https://www.fantasy.co.jp/molly-fantasy/', color: '#cc5500' },
 ];
 
 interface Report {
