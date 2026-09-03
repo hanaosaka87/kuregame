@@ -232,6 +232,16 @@ export default function ChallengePage() {
           )}
         </div>
         <button className="btn-primary" onClick={() => setStep('record')}>記録スタート！</button>
+
+        <div style={{ marginTop: 24, borderRadius: 14, overflow: 'hidden' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hook-crane-promo.png"
+            alt="フック設定で豪華景品を狙え！"
+            style={{ width: '100%', display: 'block' }}
+          />
+        </div>
+
         <AppFooter />
       </main>
     );
