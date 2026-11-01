@@ -16,17 +16,29 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState('');
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const EMOJIS = ['🎮','👑','🔥','🏆','💎','🌟','🎯','🦁','🐯','🦊','🐉','🤖'];
 
   async function handleRegister() {
     if (!email || !password || !nickname) { setError('メール・パスワード・ニックネームは必須です'); return; }
     if (password.length < 6) { setError('パスワードは6文字以上にしてください'); return; }
-    setError(''); setLoading(true);
+    setError(''); setAlreadyRegistered(false); setLoading(true);
     try {
       const supabase = getSupabase();
       const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
       if (signUpError) throw signUpError;
+      // Supabaseはメール重複時もエラーを返さずダミーユーザーを返すことがあるため、
+      // identitiesが空配列＝既存ユーザーの合図として扱う
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setAlreadyRegistered(true);
+        return;
+      }
       if (data.user) {
         await supabase.from('user_profiles').insert({
           id: data.user.id,
@@ -39,8 +51,28 @@ export default function AuthPage() {
       }
       setDone('登録完了！');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '登録に失敗しました');
+      const msg = e instanceof Error ? e.message : '登録に失敗しました';
+      if (/already registered|already exists/i.test(msg)) {
+        setAlreadyRegistered(true);
+      } else {
+        setError(msg);
+      }
     } finally { setLoading(false); }
+  }
+
+  async function handleResetPassword() {
+    if (!resetEmail) { setResetError('メールアドレスを入力してください'); return; }
+    setResetError(''); setResetLoading(true);
+    try {
+      const supabase = getSupabase();
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (resetErr) throw resetErr;
+      setResetSent(true);
+    } catch (e: unknown) {
+      setResetError(e instanceof Error ? e.message : '送信に失敗しました');
+    } finally { setResetLoading(false); }
   }
 
   async function handleLogin() {
@@ -58,7 +90,7 @@ export default function AuthPage() {
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return (
-      <main style={{ maxWidth: 480, margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
+      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚙️</div>
         <p style={{ color: 'var(--muted)' }}>Supabase設定後にユーザー登録が有効になります。</p>
         <button className="btn-secondary" onClick={() => router.push('/')} style={{ marginTop: 20, maxWidth: 200, margin: '20px auto 0' }}>TOPへ戻る</button>
@@ -67,7 +99,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>
         {mode === 'login' ? '🔑 ログイン' : '🎮 新規登録'}
       </h1>
@@ -78,7 +110,7 @@ export default function AuthPage() {
       {/* モード切替 */}
       <div style={{ display: 'flex', background: 'var(--card)', borderRadius: 12, padding: 4, marginBottom: 24 }}>
         {(['login','register'] as const).map(m => (
-          <button key={m} onClick={() => { setMode(m); setError(''); setDone(''); }}
+          <button key={m} onClick={() => { setMode(m); setError(''); setDone(''); setAlreadyRegistered(false); setShowReset(false); setResetSent(false); setResetError(''); }}
             style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
               background: mode === m ? 'linear-gradient(135deg,var(--accent),#aa00ff)' : 'transparent',
               color: mode === m ? 'white' : 'var(--muted)',
@@ -134,10 +166,49 @@ export default function AuthPage() {
 
           {error && <p style={{ color: 'var(--accent)', fontSize: '0.83rem' }}>⚠️ {error}</p>}
 
+          {alreadyRegistered && (
+            <div style={{ background: 'rgba(255,61,175,0.1)', border: '1px solid var(--accent)', borderRadius: 12, padding: 14 }}>
+              <p style={{ fontSize: '0.83rem', marginBottom: 10 }}>
+                ⚠️ このメールアドレスはすでに登録済みです。「ログイン」からお入りください。パスワードを忘れた場合はログイン画面から再設定できます。
+              </p>
+              <button className="btn-secondary" onClick={() => { setMode('login'); setAlreadyRegistered(false); }}>
+                ログイン画面へ
+              </button>
+            </div>
+          )}
+
           <button className="btn-primary" disabled={loading}
             onClick={mode === 'login' ? handleLogin : handleRegister}>
             {loading ? '処理中...' : mode === 'login' ? 'ログイン' : 'アカウント作成'}
           </button>
+
+          {mode === 'login' && !showReset && (
+            <button
+              onClick={() => { setShowReset(true); setResetEmail(email); }}
+              style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+            >
+              パスワードをお忘れですか？
+            </button>
+          )}
+
+          {mode === 'login' && showReset && (
+            <div style={{ background: 'var(--card)', borderRadius: 12, padding: 14 }}>
+              {resetSent ? (
+                <p style={{ fontSize: '0.83rem', color: 'var(--green)' }}>
+                  ✅ 再設定用のメールを送信しました。メール内のリンクから新しいパスワードを設定してください。
+                </p>
+              ) : (
+                <>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>登録したメールアドレス</label>
+                  <input type="email" placeholder="example@mail.com" value={resetEmail} onChange={e => setResetEmail(e.target.value)} style={{ marginBottom: 10 }} />
+                  {resetError && <p style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: 10 }}>⚠️ {resetError}</p>}
+                  <button className="btn-secondary" disabled={resetLoading} onClick={handleResetPassword}>
+                    {resetLoading ? '送信中...' : '再設定メールを送る'}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <div style={{ textAlign: 'center', borderTop: '1px solid var(--card2)', paddingTop: 16 }}>
             <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 10 }}>登録せずに試す</p>

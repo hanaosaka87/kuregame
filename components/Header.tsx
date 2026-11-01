@@ -7,8 +7,9 @@ export default function Header() {
 
   return (
     <header className="site-header">
-      <Link href="/">
-        <span className="logo">🕹️ クレゲー</span>
+      <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/header-logo.png" alt="クレゲー" style={{ height: 36, width: 'auto', display: 'block' }} />
       </Link>
       <div className="header-right">
         <div className="live-chip">
@@ -18,9 +19,13 @@ export default function Header() {
         {!loading && (
           user ? (
             <>
-              <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#7df3ff', fontSize: '.78rem', fontWeight: 700 }}>
+              <Link href="/mypage" style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#7df3ff', fontSize: '.78rem', fontWeight: 700 }}>
                 <span>{profile?.avatar_emoji ?? '🎮'}</span>
-                <span>{profile?.nickname ?? 'マイページ'}</span>
+                <span>{profile?.nickname ?? 'マイ戦績'}</span>
+                {!!profile?.login_streak && profile.login_streak > 1 && (
+                  <span style={{ color: 'var(--gold, #ffd700)', fontSize: '.72rem' }}>🔥{profile.login_streak}</span>
+                )}
+                <span style={{ color: '#7dffc0', fontSize: '.72rem' }}>💎{(profile?.points ?? 0).toLocaleString()}</span>
               </Link>
               <button
                 onClick={signOut}

@@ -8,6 +8,23 @@ export interface UserProfile {
   nickname: string;
   prefecture: string | null;
   avatar_emoji: string;
+  avatar_url?: string | null;
+  showcase_photo_url?: string | null;
+  login_streak?: number;
+  last_login_date?: string | null;
+  sns_x?: string | null;
+  sns_instagram?: string | null;
+  sns_tiktok?: string | null;
+  sns_youtube?: string | null;
+  favorite_stores?: string[] | null;
+  gacha_bonus_percent?: number;
+  last_gacha_date?: string | null;
+  founding_member?: boolean;
+  points?: number;
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function useAuth() {
@@ -22,9 +39,34 @@ export function useAuth() {
         .select('*')
         .eq('id', userId)
         .single();
-      setProfile(data);
+      if (data) {
+        setProfile(await updateLoginStreak(data));
+      } else {
+        setProfile(null);
+      }
     } catch {
       setProfile(null);
+    }
+  }
+
+  // 連続ログイン日数の判定・更新、毎日のログイン報酬・連続ログインマイルストーン報酬のポイント付与は、
+  // ポイントという実価値のある通貨が絡むため全てサーバー側（/api/checkin、service_roleキー）で行う。
+  // クライアントはここでDB列を直接書き換えず、サーバーの計算結果を受け取ってローカルのprofileに反映するだけ。
+  async function updateLoginStreak(data: UserProfile): Promise<UserProfile> {
+    const today = todayStr();
+    if (data.last_login_date === today) return data;
+
+    try {
+      const res = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: data.id }),
+      });
+      if (!res.ok) return data;
+      const result = await res.json();
+      return { ...data, login_streak: result.streak, last_login_date: today, points: result.points };
+    } catch {
+      return data;
     }
   }
 

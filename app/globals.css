@@ -23,7 +23,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: var(--bg-deep);
+  /* PC等の広い画面で.app（画面幅480〜820px）の外側が素の暗色だけで寂しくならないよう、
+     中央に向けて同系色のグラデーションを敷いて画面全体を塗りで埋める */
+  background: radial-gradient(140% 90% at 50% 0%, #1b0640 0%, var(--bg-deep) 55%, var(--bg-deep) 100%) fixed;
   color: var(--text);
   font-family: 'Zen Maru Gothic', sans-serif;
   min-height: 100vh;
@@ -37,7 +39,9 @@ button { font-family: inherit; }
 
 /* ===== APP CONTAINER ===== */
 .app {
-  max-width: 480px;
+  /* スマホでは従来どおり画面幅いっぱい、PC等の広い画面では820pxまで広げて中央表示する
+     （社長指摘：PC・スマホとも480px固定だと広い画面で左右が真っ黒に見切れて見にくかった） */
+  max-width: min(100vw, 820px);
   margin: 0 auto;
   min-height: 100vh;
   position: relative;
@@ -90,6 +94,13 @@ button { font-family: inherit; }
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(5,0,15,.35) 0%, transparent 40%, rgba(10,0,24,.85) 76%, var(--bg) 100%);
 }
+@media (max-width: 700px) {
+  /* 縦長スマホ幅では画像の縦全体がそのまま表示され、
+     背景画像に焼き込まれた「クレゲーチャンピオンシップ」の文字が
+     上部の帯（SEASON1/月間ランキング）と重なるため、上寄りを追加でズーム＆トリミングする */
+  .hero-img { transform: scale(1.22); transform-origin: 50% 22%; }
+  .hero-veil { background: linear-gradient(180deg, rgba(5,0,15,.62) 0%, rgba(5,0,15,.15) 30%, transparent 46%, rgba(10,0,24,.85) 76%, var(--bg) 100%); }
+}
 .hero-crt {
   position: absolute; inset: 0;
   background: repeating-linear-gradient(180deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
@@ -98,10 +109,19 @@ button { font-family: inherit; }
 }
 .hero-scan { display: none; }
 .hero-badges { position: absolute; top: 16px; left: 16px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-.badge-season { padding: 5px 10px; background: var(--accent); color: #14001f; font-family: var(--num); font-size: .68rem; font-weight: 700; letter-spacing: .1em; }
-.badge-timer { padding: 4px 9px; background: rgba(10,0,24,.72); border: 1px solid rgba(255,215,0,.45); color: var(--gold); font-size: .66rem; font-weight: 700; }
+.badge-season { padding: 5px 10px; background: var(--accent); color: #14001f; font-family: var(--num); font-size: .68rem; font-weight: 700; letter-spacing: .1em; box-shadow: 0 1px 8px rgba(0,0,0,.6); }
+.badge-timer {
+  position: absolute; top: 16px; right: 16px; z-index: 2;
+  padding: 4px 9px; background: rgba(10,0,24,.85); border: 1px solid rgba(255,215,0,.45);
+  color: var(--gold); font-size: .66rem; font-weight: 700; box-shadow: 0 1px 8px rgba(0,0,0,.6);
+  white-space: nowrap;
+}
+@media (max-width: 360px) {
+  .badge-timer { font-size: .58rem; padding: 4px 7px; }
+}
 .hero-claw {
-  position: absolute; top: 54px; right: 26px; font-size: 2rem;
+  position: absolute; top: 54px; right: 26px; width: 56px; height: auto;
+  border-radius: 10px;
   filter: drop-shadow(0 0 10px rgba(0,229,255,.8));
   animation: clawBob 3.4s ease-in-out infinite;
   transform-origin: 50% 0;
@@ -113,6 +133,7 @@ button { font-family: inherit; }
   animation: neonFlicker 18s linear infinite;
 }
 .hero-copy p { margin-top: 8px; font-size: .92rem; font-weight: 700; color: #e6d5ff; line-height: 1.5; text-shadow: 0 2px 10px var(--bg); }
+.hero-copy .hero-extra { font-size: .76rem; font-weight: 600; color: #c9b8e6; }
 
 /* ===== STATS ===== */
 .stats { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 2px solid rgba(255,61,175,.25); }
@@ -156,12 +177,22 @@ button { font-family: inherit; }
 .btn-primary:hover { color: #fff; }
 .btn-primary b { display: block; font-size: 1.28rem; font-weight: 900; letter-spacing: .05em; }
 .btn-primary small { display: block; margin-top: 3px; font-size: .72rem; font-weight: 700; color: rgba(255,255,255,.85); }
+.btn-banner {
+  display: block; padding: 0; border: none; width: 100%; line-height: 0; cursor: pointer;
+  animation: ctaPulse 2.4s ease-in-out infinite;
+}
+.btn-banner img { display: block; width: 100%; height: auto; }
 .cta-row { display: flex; gap: 8px; margin-top: 10px; }
 .btn-sub {
   flex: 1; padding: 11px; border: 1px solid #4a1f8f; background: var(--card-dark);
   color: #d8c4ff; font-size: .76rem; font-weight: 700; cursor: pointer;
 }
 .btn-sub:hover { color: #fff; border-color: var(--accent); }
+.btn-share {
+  padding: 11px; border: 1px solid rgba(0,229,255,.5); background: rgba(0,229,255,.08);
+  color: var(--cyan); font-size: .82rem; font-weight: 700; cursor: pointer;
+}
+.btn-share:hover { background: rgba(0,229,255,.16); border-color: var(--cyan); }
 
 /* ===== SECTION HEAD ===== */
 .sec-head {
@@ -256,12 +287,12 @@ button { font-family: inherit; }
 
 /* ===== FOOTER NAV ===== */
 .footer-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; z-index: 60;
-  display: grid; grid-template-columns: repeat(5,1fr);
+  position: fixed; bottom: 0; left: 0; right: 0; max-width: min(100vw, 820px); margin: 0 auto; z-index: 60;
+  display: grid; grid-template-columns: repeat(8,1fr);
   background: rgba(10,0,24,.92); backdrop-filter: blur(12px);
   border-top: 2px solid rgba(255,61,175,.35);
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; color: var(--muted); font-size: .58rem; font-weight: 700; text-decoration: none; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 1px; color: var(--muted); font-size: .48rem; font-weight: 700; text-decoration: none; }
 .nav-item span { font-size: 1.05rem; }
 .nav-item.active { color: var(--accent); }
 

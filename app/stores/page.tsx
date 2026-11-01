@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import AppFooter from '@/components/AppFooter';
+import { resizeImage } from '@/lib/image';
 
 const PREFS = [
   '北海道','青森','岩手','宮城','秋田','山形','福島',
@@ -22,7 +23,23 @@ const CHAINS = [
   { name: 'namco（ナムコ）', emoji: '🟡', desc: 'バンダイナムコ運営。プライズ景品の種類が豊富。', url: 'https://bandainamco-am.co.jp/game_center/', color: '#cc8800' },
   { name: 'アドアーズ', emoji: '🟢', desc: '東日本・西日本に展開。クレーン台の設定が話題になりやすい。', url: 'https://www.adores.jp/', color: '#008844' },
   { name: 'モーリーファンタジー', emoji: '🟠', desc: 'イオングループ内に多数展開。ファミリー向け。', url: 'https://www.fantasy.co.jp/molly-fantasy/', color: '#cc5500' },
+  { name: 'アミパラ', emoji: '🟣', desc: 'YouTubeでも人気。中国・四国エリアを中心に全国約30施設を展開。', url: 'https://amipara.co.jp/', color: '#9900aa' },
+  { name: '回遊館', emoji: '🐟', desc: 'クレーンゲーム専門店チェーン。中国・関西・中部地方に展開。景品情報はInstagram/TikTokで発信。', url: 'https://www.instagram.com/kaiyukan_/', color: '#00aacc' },
+  { name: 'OTAICHI!! POP!! WORLD!!（オタイチ）', emoji: '🎪', desc: 'クレーンゲーム＆カプセルトイ専門店。', url: 'https://otaichi-pop-world.com/', color: '#ff4488' },
+  { name: 'エースゲームフィールド', emoji: '⭐', desc: '兵庫県神戸市のクレーンゲーム専門店。', url: 'https://acegamefield.com/', color: '#3355ff' },
+  { name: 'トレジャーランド', emoji: '💎', desc: '「いつでもだれでもとれる！！」がコンセプトのクレーンゲーム専門店（山崎屋）。全国7店舗を展開。', url: 'https://www.yamazakiya.co.jp/treasureland/', color: '#00cc99' },
+  { name: 'トレトレ倉庫', emoji: '📦', desc: 'クレーンゲーム設置店。大川店など展開中。', url: 'https://kaitoridan.group/toretore-ookawa/', color: '#886600' },
 ];
+
+// Fisher-Yatesシャッフル（元配列は変更しない）
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 interface Report {
   id: string;
@@ -30,16 +47,43 @@ interface Report {
   prefecture: string;
   addr: string | null;
   comment: string | null;
+  machine_types?: string[] | null;
+  prize_genres?: string[] | null;
   reported_at: string;
   is_new?: boolean;
 }
 
+interface StoreEvent {
+  id: string;
+  store_name: string;
+  prefecture: string | null;
+  title: string;
+  body: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  nickname: string | null;
+  photo_url: string | null;
+  created_at: string;
+}
+
+// クレゲー攻略ガイド（/guide）の分類と表記を揃えている
+const MACHINE_TYPE_OPTIONS = ['フック設定', 'アーム（クレーン）', '橋渡し', 'タワー崩し', '一本橋・棒渡し', 'プッシュ・プレート', 'すくい取り'];
+// アプリ内の景品カテゴリ（lib/supabase.ts の CATEGORY_LABELS）と表記を揃えている
+const PRIZE_GENRE_OPTIONS = [
+  { key: 'food', label: '🍬 食品' },
+  { key: 'daily', label: '🧴 日用品' },
+  { key: 'figure', label: '🎁 プライズ' },
+  { key: 'toy', label: '🧸 おもちゃ' },
+  { key: 'other', label: '📦 その他' },
+];
+
 interface OsmStore {
-  id: number;
+  id: string;
   name: string;
   lat: number;
   lng: number;
   addr: string;
+  prefecture: string | null;
   phone: string | null;
   hours: string | null;
   website: string | null;
@@ -51,7 +95,10 @@ function daysSince(dateStr: string) {
 }
 
 export default function StoresPage() {
-  const [activeTab, setActiveTab] = useState<'new' | 'osm' | 'chains'>('new');
+  const [activeTab, setActiveTab] = useState<'new' | 'osm' | 'chains' | 'events'>('new');
+  // チェーン公式は毎回ランダムな順で表示（特定チェーンが常に先頭で有利にならないように）。
+  // スポンサー枠（/sponsor/store）は別ページの申込制のため、ここでは並び替え対象外。
+  const [shuffledChains] = useState(() => shuffle(CHAINS));
 
   // 新店投稿一覧（Supabase → フォールバックはダミー）
   const [reports, setReports] = useState<Report[]>([]);
@@ -64,14 +111,27 @@ export default function StoresPage() {
 
   // フィルター
   const [prefFilter, setPrefFilter] = useState('すべて');
+  const [osmPrefFilter, setOsmPrefFilter] = useState('すべて');
   const [search, setSearch] = useState('');
 
   // 報告フォーム
   const [showReport, setShowReport] = useState(false);
-  const [reportForm, setReportForm] = useState({ name: '', prefecture: '', addr: '', comment: '' });
+  const [reportForm, setReportForm] = useState({ name: '', prefecture: '', addr: '', comment: '', machine_types: [] as string[], prize_genres: [] as string[] });
   const [submitting, setSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState('');
+
+  // イベント情報
+  const [events, setEvents] = useState<StoreEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [eventForm, setEventForm] = useState({ store_name: '', prefecture: '', title: '', body: '', start_date: '', end_date: '', nickname: '' });
+  const [eventSubmitting, setEventSubmitting] = useState(false);
+  const [eventDone, setEventDone] = useState(false);
+  const [eventError, setEventError] = useState('');
+  const [eventPhotoPreview, setEventPhotoPreview] = useState<string | null>(null);
+  const [eventPhotoData, setEventPhotoData] = useState<{ base64: string; mediaType: string } | null>(null);
+  const eventPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // 新店情報を取得（Supabase設定済みならDB、未設定ならダミー）
   useEffect(() => {
@@ -100,6 +160,14 @@ export default function StoresPage() {
       .catch(() => { setOsmError(true); setOsmLoading(false); });
   }, [activeTab, osmStores.length]);
 
+  // イベント情報を取得
+  useEffect(() => {
+    fetch('/api/stores/events')
+      .then(r => r.json())
+      .then(d => { setEvents(d.events || []); setEventsLoading(false); })
+      .catch(() => setEventsLoading(false));
+  }, []);
+
   const filteredReports = useMemo(() => {
     let list = reports;
     if (prefFilter !== 'すべて') list = list.filter(r => r.prefecture === prefFilter);
@@ -109,14 +177,15 @@ export default function StoresPage() {
 
   const filteredOsm = useMemo(() => {
     let list = osmStores;
+    if (osmPrefFilter !== 'すべて') list = list.filter(s => s.prefecture === osmPrefFilter);
     if (search) list = list.filter(s => s.name.includes(search) || s.addr.includes(search) || (s.brand || '').includes(search));
     return list;
-  }, [osmStores, search]);
+  }, [osmStores, osmPrefFilter, search]);
 
   const filteredChains = useMemo(() => {
-    if (!search) return CHAINS;
-    return CHAINS.filter(c => c.name.includes(search) || c.desc.includes(search));
-  }, [search]);
+    if (!search) return shuffledChains;
+    return shuffledChains.filter(c => c.name.includes(search) || c.desc.includes(search));
+  }, [search, shuffledChains]);
 
   const newCount = reports.filter(r => daysSince(r.reported_at) <= 14).length;
 
@@ -139,10 +208,56 @@ export default function StoresPage() {
     }
   }
 
+  async function handleEventPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const resized = await resizeImage(file);
+      setEventPhotoData(resized);
+      setEventPhotoPreview(`data:${resized.mediaType};base64,${resized.base64}`);
+    } catch {
+      setEventError('写真の読み込みに失敗しました');
+    }
+  }
+
+  function removeEventPhoto() {
+    setEventPhotoData(null);
+    setEventPhotoPreview(null);
+    if (eventPhotoInputRef.current) eventPhotoInputRef.current.value = '';
+  }
+
+  async function submitEvent(e: React.FormEvent) {
+    e.preventDefault();
+    setEventSubmitting(true);
+    setEventError('');
+    try {
+      const res = await fetch('/api/stores/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...eventForm,
+          photo_base64: eventPhotoData?.base64 || null,
+          photo_media_type: eventPhotoData?.mediaType || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setEventDone(true);
+      const listRes = await fetch('/api/stores/events');
+      const listData = await listRes.json();
+      setEvents(listData.events || []);
+    } catch {
+      setEventError('送信に失敗しました。もう一度お試しください。');
+    } finally {
+      setEventSubmitting(false);
+    }
+  }
+
   const tabs = [
     { key: 'new' as const,    label: `🆕 新店情報`, sub: reportsLoading ? '' : `${reports.length}件` },
     { key: 'chains' as const, label: `🏢 チェーン公式`, sub: `${CHAINS.length}社` },
     { key: 'osm' as const,    label: `🗺️ 全国施設`, sub: osmLoading ? '取得中' : osmStores.length > 0 ? `${filteredOsm.length}件` : '' },
+    { key: 'events' as const, label: `🎉 イベント情報`, sub: eventsLoading ? '' : `${events.length}件` },
   ];
 
   return (
@@ -159,7 +274,18 @@ export default function StoresPage() {
             </div>
           )}
         </div>
-        <p style={{ fontSize: '.78rem', color: 'var(--muted)', lineHeight: 1.6 }}>全国のクレーンゲーム店舗・新規オープン情報を掲載。知ってたら報告してください！</p>
+        <p style={{ fontSize: '.78rem', color: 'var(--muted)', lineHeight: 1.6 }}>全国のクレーンゲーム店舗・新規オープン情報を掲載。知ってたらどんどん報告してクレゲーを盛り上げてみんなで共有しよう！</p>
+      </div>
+
+      {/* 施設運営者向け誘導 */}
+      <div style={{ padding: '14px 16px 0' }}>
+        <Link href="/sponsor/store" style={{ display: 'block', textDecoration: 'none' }}>
+          <div style={{ background: 'rgba(0,229,255,.08)', border: '1px solid rgba(0,229,255,.4)', padding: '11px 14px', borderLeft: '4px solid var(--cyan)' }}>
+            <div style={{ fontSize: '.76rem', color: 'var(--cyan)', fontWeight: 700 }}>
+              🏪 この店舗を運営されている方へ：公式認定・店舗別ランキング等のスポンサープランはこちら →
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* 検索 */}
@@ -187,7 +313,7 @@ export default function StoresPage() {
       {activeTab === 'new' && (
         <div style={{ padding: '14px 16px 0' }}>
           {/* 都道府県フィルター */}
-          <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 10, scrollbarWidth: 'none' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingBottom: 10 }}>
             {['すべて', ...PREFS].map(p => (
               <button key={p} onClick={() => setPrefFilter(p)}
                 style={{
@@ -229,7 +355,19 @@ export default function StoresPage() {
                         {days <= 7 && <span style={{ padding: '2px 7px', background: 'rgba(255,61,175,.2)', border: '1px solid var(--accent)', color: 'var(--accent)', fontSize: '.6rem', fontWeight: 700 }}>{days === 0 ? '本日' : `${days}日前`}</span>}
                       </div>
                     </div>
-                    <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginBottom: r.comment ? 6 : 0 }}>📍 {r.prefecture}{r.addr ? ` · ${r.addr}` : ''}</div>
+                    <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginBottom: 6 }}>📍 {r.prefecture}{r.addr ? ` · ${r.addr}` : ''}</div>
+                    {((r.machine_types && r.machine_types.length > 0) || (r.prize_genres && r.prize_genres.length > 0)) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
+                        {r.machine_types?.map(m => (
+                          <span key={m} style={{ fontSize: '.66rem', padding: '2px 8px', borderRadius: 20, background: 'rgba(0,229,255,.12)', border: '1px solid rgba(0,229,255,.4)', color: 'var(--cyan)' }}>{m}</span>
+                        ))}
+                        {r.prize_genres?.map(gk => (
+                          <span key={gk} style={{ fontSize: '.66rem', padding: '2px 8px', borderRadius: 20, background: 'rgba(255,215,0,.12)', border: '1px solid rgba(255,215,0,.4)', color: 'var(--gold)' }}>
+                            {PRIZE_GENRE_OPTIONS.find(g => g.key === gk)?.label ?? gk}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     {r.comment && <div style={{ fontSize: '.78rem', color: 'var(--lav)', background: 'rgba(255,255,255,.04)', padding: '7px 10px', borderLeft: '2px solid var(--purple)' }}>💬 {r.comment}</div>}
                     <div style={{ marginTop: 8, fontSize: '.65rem', color: 'var(--muted2)' }}>報告日：{r.reported_at.slice(0, 10)}</div>
                   </div>
@@ -278,6 +416,22 @@ export default function StoresPage() {
       {/* ===== 全国施設一覧タブ（OSM） ===== */}
       {activeTab === 'osm' && (
         <div style={{ padding: '14px 16px 0' }}>
+          {/* 都道府県フィルター */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingBottom: 10 }}>
+            {['すべて', ...PREFS].map(p => (
+              <button key={p} onClick={() => setOsmPrefFilter(p)}
+                style={{
+                  flexShrink: 0, padding: '4px 10px', border: '1px solid', cursor: 'pointer', fontFamily: 'inherit',
+                  fontSize: '.68rem', fontWeight: 700, whiteSpace: 'nowrap',
+                  background: osmPrefFilter === p ? 'rgba(255,61,175,.18)' : 'var(--card)',
+                  borderColor: osmPrefFilter === p ? 'var(--accent)' : 'var(--line)',
+                  color: osmPrefFilter === p ? 'var(--accent)' : 'var(--muted)',
+                }}>
+                {p}
+              </button>
+            ))}
+          </div>
+
           {osmLoading ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <div style={{ fontSize: '2rem', marginBottom: 10 }}>🔍</div>
@@ -307,7 +461,7 @@ export default function StoresPage() {
                       {s.hours && <span style={{ fontSize: '.65rem', color: 'var(--lav)', background: 'rgba(255,255,255,.05)', padding: '3px 7px', border: '1px solid var(--line)' }}>🕐 {s.hours}</span>}
                       {s.phone && <a href={`tel:${s.phone}`} style={{ fontSize: '.65rem', color: 'var(--cyan)', background: 'rgba(0,229,255,.06)', padding: '3px 7px', border: '1px solid rgba(0,229,255,.25)' }}>📞 {s.phone}</a>}
                       {s.website && <a href={s.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '.65rem', color: 'var(--accent)', background: 'rgba(255,61,175,.06)', padding: '3px 7px', border: '1px solid rgba(255,61,175,.25)' }}>🌐 公式サイト</a>}
-                      <a href={`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`} target="_blank" rel="noopener noreferrer"
+                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.addr ? `${s.name} ${s.addr}` : s.name)}`} target="_blank" rel="noopener noreferrer"
                         style={{ fontSize: '.65rem', color: 'var(--green)', background: 'rgba(57,255,136,.06)', padding: '3px 7px', border: '1px solid rgba(57,255,136,.25)' }}>🗺️ マップで見る</a>
                     </div>
                   </div>
@@ -321,18 +475,136 @@ export default function StoresPage() {
         </div>
       )}
 
+      {activeTab === 'events' && (
+        <div style={{ padding: '14px 16px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <p style={{ fontSize: '.72rem', color: 'var(--muted)' }}>店舗のキャンペーン・新台入替・記念イベント等をみんなで共有しよう🎉</p>
+            <button onClick={() => setShowEventForm(true)}
+              style={{ flexShrink: 0, background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: '.76rem', fontWeight: 700, cursor: 'pointer' }}>
+              ＋ 投稿する
+            </button>
+          </div>
+
+          {eventsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>読み込み中...</div>
+          ) : events.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontSize: '.88rem' }}>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>🎉</div>
+              まだイベント情報がありません。最初の投稿をしてみませんか？
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 16 }}>
+              {events.map(ev => (
+                <div key={ev.id} style={{ background: 'var(--card)', border: '1px solid var(--line)', padding: '13px', borderLeft: '4px solid var(--gold)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                    <div style={{ fontWeight: 900, fontSize: '.94rem' }}>{ev.title}</div>
+                    {(ev.start_date || ev.end_date) && (
+                      <span style={{ fontSize: '.65rem', color: 'var(--gold)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                        {ev.start_date || '?'}{ev.end_date ? `〜${ev.end_date}` : ''}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '.74rem', color: 'var(--cyan)', marginBottom: 4 }}>
+                    🏪 {ev.store_name}{ev.prefecture ? `（${ev.prefecture}）` : ''}
+                  </div>
+                  {ev.body && <p style={{ fontSize: '.8rem', color: 'var(--lav)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{ev.body}</p>}
+                  {ev.photo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={ev.photo_url} alt={ev.title} style={{ width: '100%', maxHeight: 220, objectFit: 'cover', marginTop: 8, borderRadius: 4 }} />
+                  )}
+                  {ev.nickname && <div style={{ fontSize: '.65rem', color: 'var(--muted)', marginTop: 6 }}>投稿：{ev.nickname}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== イベント投稿モーダル ===== */}
+      {showEventForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,0,15,.88)', backdropFilter: 'blur(6px)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
+          onClick={() => { if (!eventSubmitting) setShowEventForm(false); }}>
+          <div style={{ width: '100%', maxWidth: 'min(100vw, 820px)', margin: '0 auto', maxHeight: '88vh', overflowY: 'auto', background: 'var(--card)', borderTop: '2px solid var(--gold)', padding: '24px 20px 40px' }}
+            onClick={e => e.stopPropagation()}>
+            {eventDone ? (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>✅</div>
+                <div style={{ fontWeight: 900, fontSize: '1rem', marginBottom: 8, color: 'var(--green)' }}>投稿しました！</div>
+                <p style={{ fontSize: '.8rem', color: 'var(--muted)', lineHeight: 1.7 }}>共有ありがとうございます🎉</p>
+                <button className="btn-primary" style={{ marginTop: 20 }} onClick={() => { setShowEventForm(false); setEventDone(false); setEventForm({ store_name: '', prefecture: '', title: '', body: '', start_date: '', end_date: '', nickname: '' }); removeEventPhoto(); }}>閉じる</button>
+              </div>
+            ) : (
+              <form onSubmit={submitEvent}>
+                <h3 style={{ fontWeight: 900, marginBottom: 16 }}>🎉 イベント情報を投稿</h3>
+                <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>店舗名 *</label>
+                <input required value={eventForm.store_name} onChange={e => setEventForm(f => ({ ...f, store_name: e.target.value }))}
+                  placeholder="例：GiGO 渋谷" style={{ width: '100%', marginBottom: 12, padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+                <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>都道府県</label>
+                <select value={eventForm.prefecture} onChange={e => setEventForm(f => ({ ...f, prefecture: e.target.value }))}
+                  style={{ width: '100%', marginBottom: 12, padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)' }}>
+                  <option value="">選択しない</option>
+                  {PREFS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>イベント名 *</label>
+                <input required value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="例：新台入替キャンペーン" style={{ width: '100%', marginBottom: 12, padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>開始日</label>
+                    <input type="date" value={eventForm.start_date} onChange={e => setEventForm(f => ({ ...f, start_date: e.target.value }))}
+                      style={{ width: '100%', padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>終了日</label>
+                    <input type="date" value={eventForm.end_date} onChange={e => setEventForm(f => ({ ...f, end_date: e.target.value }))}
+                      style={{ width: '100%', padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+                  </div>
+                </div>
+                <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>内容（任意）</label>
+                <textarea value={eventForm.body} onChange={e => setEventForm(f => ({ ...f, body: e.target.value }))} rows={3}
+                  placeholder="景品・キャンペーン内容など" style={{ width: '100%', marginBottom: 12, padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)', resize: 'none' }} />
+                <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>ニックネーム（任意）</label>
+                <input value={eventForm.nickname} onChange={e => setEventForm(f => ({ ...f, nickname: e.target.value }))}
+                  placeholder="投稿者名" style={{ width: '100%', marginBottom: 12, padding: '10px', background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+
+                <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>写真（任意・1枚まで）</label>
+                {eventPhotoPreview ? (
+                  <div style={{ position: 'relative', marginBottom: 16 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={eventPhotoPreview} alt="プレビュー" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 4 }} />
+                    <button type="button" onClick={removeEventPhoto}
+                      style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,.7)', color: 'white', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }}>✕</button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => eventPhotoInputRef.current?.click()}
+                    style={{ width: '100%', padding: '16px', marginBottom: 16, background: 'var(--field)', border: '2px dashed var(--line)', color: 'var(--muted)', cursor: 'pointer', fontSize: '.8rem' }}>
+                    📷 写真を選択
+                  </button>
+                )}
+                <input ref={eventPhotoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleEventPhotoChange} />
+
+                {eventError && <p style={{ color: 'var(--accent)', fontSize: '.8rem', marginBottom: 10 }}>{eventError}</p>}
+                <button type="submit" disabled={eventSubmitting} className="btn-primary" style={{ width: '100%' }}>
+                  {eventSubmitting ? '送信中...' : '投稿する'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ===== 報告モーダル ===== */}
       {showReport && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,0,15,.88)', backdropFilter: 'blur(6px)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
           onClick={() => { if (!submitting) setShowReport(false); }}>
-          <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', background: 'var(--card)', borderTop: '2px solid var(--accent)', padding: '24px 20px 40px' }}
+          <div style={{ width: '100%', maxWidth: 'min(100vw, 820px)', margin: '0 auto', maxHeight: '88vh', overflowY: 'auto', background: 'var(--card)', borderTop: '2px solid var(--accent)', padding: '24px 20px 40px' }}
             onClick={e => e.stopPropagation()}>
             {reportDone ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>✅</div>
                 <div style={{ fontWeight: 900, fontSize: '1rem', marginBottom: 8, color: 'var(--green)' }}>報告ありがとうございます！</div>
                 <p style={{ fontSize: '.8rem', color: 'var(--muted)', lineHeight: 1.7 }}>運営が確認後に掲載します。<br />ご協力ありがとうございます🎮</p>
-                <button className="btn-primary" style={{ marginTop: 20 }} onClick={() => { setShowReport(false); setReportDone(false); setReportForm({ name: '', prefecture: '', addr: '', comment: '' }); }}>閉じる</button>
+                <button className="btn-primary" style={{ marginTop: 20 }} onClick={() => { setShowReport(false); setReportDone(false); setReportForm({ name: '', prefecture: '', addr: '', comment: '', machine_types: [], prize_genres: [] }); }}>閉じる</button>
               </div>
             ) : (
               <>
@@ -353,6 +625,52 @@ export default function StoresPage() {
                   <div>
                     <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>住所・場所</label>
                     <input type="text" placeholder="例：渋谷区道玄坂1-2-3" value={reportForm.addr} onChange={e => setReportForm(f => ({ ...f, addr: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>設置機種（複数選択可・任意）</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {MACHINE_TYPE_OPTIONS.map(m => {
+                        const active = reportForm.machine_types.includes(m);
+                        return (
+                          <button key={m} type="button"
+                            onClick={() => setReportForm(f => ({
+                              ...f,
+                              machine_types: active ? f.machine_types.filter(x => x !== m) : [...f.machine_types, m],
+                            }))}
+                            style={{
+                              padding: '6px 12px', borderRadius: 20, fontSize: '.76rem', cursor: 'pointer', fontFamily: 'inherit',
+                              border: `1px solid ${active ? 'var(--accent)' : 'var(--line)'}`,
+                              background: active ? 'rgba(255,61,175,.2)' : 'var(--card2)',
+                              color: active ? 'var(--accent)' : 'var(--muted)',
+                            }}>
+                            {m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>景品ジャンル（複数選択可・任意）</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {PRIZE_GENRE_OPTIONS.map(g => {
+                        const active = reportForm.prize_genres.includes(g.key);
+                        return (
+                          <button key={g.key} type="button"
+                            onClick={() => setReportForm(f => ({
+                              ...f,
+                              prize_genres: active ? f.prize_genres.filter(x => x !== g.key) : [...f.prize_genres, g.key],
+                            }))}
+                            style={{
+                              padding: '6px 12px', borderRadius: 20, fontSize: '.76rem', cursor: 'pointer', fontFamily: 'inherit',
+                              border: `1px solid ${active ? 'var(--accent)' : 'var(--line)'}`,
+                              background: active ? 'rgba(255,61,175,.2)' : 'var(--card2)',
+                              color: active ? 'var(--accent)' : 'var(--muted)',
+                            }}>
+                            {g.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div>
                     <label style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'block', marginBottom: 5 }}>コメント（台数・特徴など）</label>

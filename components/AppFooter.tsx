@@ -12,9 +12,12 @@ export default function AppFooter() {
   const nav = [
     { href: '/',          emoji: '🏠', label: 'ホーム' },
     { href: '/challenge', emoji: '🎯', label: 'チャレンジ' },
+    { href: '/feed',      emoji: '🔥', label: 'フィード' },
+    { href: '/mypage',    emoji: '📊', label: 'マイ戦績' },
     { href: '/ranking',   emoji: '🏆', label: 'ランキング' },
     { href: '/stores',    emoji: '🏪', label: '店舗' },
-    { href: '/guide',     emoji: '📖', label: 'ガイド' },
+    { href: '/howto',     emoji: '📖', label: '遊び方' },
+    { href: '/guide',     emoji: '🕹️', label: '攻略' },
   ];
 
   return (
@@ -25,6 +28,10 @@ export default function AppFooter() {
           style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.72rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
           💬 フィードバック
         </button>
+        <Link href="/oneshot" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>💥 一撃ゲットチャレンジ</Link>
+        <Link href="/championship" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>🏆 チャンピオン大会</Link>
+        <Link href="/sponsor" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>🤝 スポンサー募集</Link>
+        <Link href="/flyer" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>📣 フライヤー</Link>
         <Link href="/privacy" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>プライバシーポリシー</Link>
         <Link href="/tokutei" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>特定商取引法</Link>
       </div>

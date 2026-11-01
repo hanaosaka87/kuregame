@@ -1,0 +1,46 @@
+workflows:
+  ios-release:
+    name: クレゲー iOS リリースビルド
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        # Codemagicの環境変数グループ「app_store_credentials」に以下を登録すること：
+        # APP_STORE_CONNECT_ISSUER_ID / APP_STORE_CONNECT_KEY_IDENTIFIER / APP_STORE_CONNECT_PRIVATE_KEY
+        # CERTIFICATE_PRIVATE_KEY（配布用証明書の秘密鍵）
+        - app_store_credentials
+      vars:
+        BUNDLE_ID: "biz.trickster.hana.cranegame.app"
+        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+      node: 20
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: npm install
+        script: npm install
+      - name: Capacitor sync（Webアセットをネイティブプロジェクトへ反映）
+        script: npx cap sync ios
+      - name: Xcodeの自動署名を設定
+        script: |
+          xcode-project use-profiles
+      - name: IPAをビルド
+        script: |
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # 本番公開まで自動化する場合はsubmit_to_app_storeもtrueにし審査提出まで自動化できるが、
+        # 最初はTestFlight配信のみに留め、動作確認後に手動でApp Store提出する運用を推奨

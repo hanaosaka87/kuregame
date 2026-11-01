@@ -11,7 +11,7 @@ const PROMPT = `この写真に写っているクレーンゲームの景品・�
 
 各商品について返す内容：
 - name: 商品名（ブランド名・シリーズ名があれば含める。不明なら「ぬいぐるみ」「お菓子」など種別名）
-- retail_price: 日本での希望小売価格（円）。不明な場合は500
+- retail_price: 日本での実勢価格（円）。キャラクター名・作品名・シリーズが少しでも読み取れる場合は、そのプライズ景品としての一般的な相場（安いものは数百円、人気キャラの大型フィギュアは3000〜5000円程度になることもある）を実際に推定すること。安易に定額へ逃げず、パッケージ・台座・POP等の手がかりも活用して具体的に見積もる。手がかりが本当に何もなく特定不能な場合に限り、categoryがfigureなら800、それ以外は500とする
 - quantity: 個数（同じ商品の個数のみ。1が基本）
 - category: food / daily / figure / toy / other のいずれか
 
@@ -28,8 +28,9 @@ export async function POST(req: NextRequest) {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-haiku-5-5',
       max_tokens: 1500,
+      thinking: { type: 'disabled' },
       messages: [{
         role: 'user',
         content: [

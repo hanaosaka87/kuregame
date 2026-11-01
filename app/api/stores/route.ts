@@ -1,57 +1,62 @@
 import { NextResponse } from 'next/server';
-
-const OVERPASS = 'https://overpass-api.de/api/interpreter';
-
-const QUERY = `
-[out:json][timeout:30];
-area["name"="日本"]["admin_level"="2"]->.japan;
-(
-  node["leisure"="amusement_arcade"](area.japan);
-  node["amenity"="amusement_arcade"](area.japan);
-);
-out body qt 500;
-`;
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+// 「全国施設」タブ用データ。OpenStreetMap（osm_stores）とGoogle Places API
+// （places_stores）の2ソースを事前収集キャッシュから合算して返す。
+// 以前はリクエストのたびにOverpass APIへライブ問い合わせしていたが、
+// 国全体のarea検索は公開サーバーで確実にタイムアウトしていたため、
+// 週次スクリプトで事前収集したテーブルから返すだけにした。
 export async function GET() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.json({ stores: [], total: 0 });
+  }
+
   try {
-    const res = await fetch(OVERPASS, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(QUERY)}`,
-    });
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
 
-    if (!res.ok) throw new Error(`Overpass ${res.status}`);
+    const [osmRes, placesRes] = await Promise.all([
+      supabase.from('osm_stores').select('id, name, lat, lng, addr, phone, hours, website, brand, prefecture'),
+      supabase.from('places_stores').select('id, name, lat, lng, addr, prefecture'),
+    ]);
 
-    const json = await res.json();
+    if (osmRes.error) throw osmRes.error;
+    if (placesRes.error) throw placesRes.error;
 
-    const stores = (json.elements as Record<string, unknown>[])
-      .map((el) => {
-        const tags = (el.tags ?? {}) as Record<string, string>;
-        return {
-          id: el.id,
-          name: tags['name'] || tags['name:ja'] || null,
-          lat: el.lat as number,
-          lng: el.lon as number,
-          addr: [
-            tags['addr:province'],
-            tags['addr:city'],
-            tags['addr:quarter'],
-            tags['addr:street'],
-            tags['addr:housenumber'],
-          ].filter(Boolean).join(''),
-          phone: tags['phone'] || null,
-          hours: tags['opening_hours'] || null,
-          website: tags['website'] || null,
-          brand: tags['brand'] || tags['operator'] || null,
-        };
-      })
-      .filter((s) => s.name);
+    const osmStores = (osmRes.data || []).map((s) => ({
+      id: `osm:${s.id}`,
+      name: s.name,
+      lat: s.lat,
+      lng: s.lng,
+      addr: s.addr,
+      prefecture: s.prefecture,
+      phone: s.phone,
+      hours: s.hours,
+      website: s.website,
+      brand: s.brand,
+    }));
 
+    const placesStores = (placesRes.data || []).map((s) => ({
+      id: `places:${s.id}`,
+      name: s.name,
+      lat: s.lat,
+      lng: s.lng,
+      addr: s.addr,
+      prefecture: s.prefecture,
+      phone: null,
+      hours: null,
+      website: null,
+      brand: null,
+    }));
+
+    const stores = [...osmStores, ...placesStores];
     return NextResponse.json({ stores, total: stores.length });
   } catch (e) {
-    console.error('Overpass error:', e);
+    console.error('stores fetch error:', e);
     return NextResponse.json({ stores: [], total: 0, error: true }, { status: 200 });
   }
 }

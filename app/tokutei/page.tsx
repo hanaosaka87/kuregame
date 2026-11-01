@@ -11,8 +11,8 @@ const ROWS = [
   { label: '代表者', value: '非公開（請求があれば遅滞なく開示します）' },
   { label: '所在地', value: '非公開（請求があれば遅滞なく開示します）' },
   { label: '電話番号', value: '非公開（請求があれば遅滞なく開示します）' },
-  { label: 'メールアドレス', value: 'hanaosaka87@gmail.com' },
-  { label: 'サービスURL', value: 'https://kuregame.vercel.app' },
+  { label: 'メールアドレス', value: 'hana@trickster.biz' },
+  { label: 'サービスURL', value: 'https://cranegame.hana.trickster.biz' },
   { label: '販売価格', value: '現在無料（将来的に有料プランを提供予定。価格は告知ページに記載します）' },
   { label: '対価以外の費用', value: 'インターネット接続費用（利用者負担）' },
   { label: '支払方法', value: 'クレジットカード（Stripe経由）※有料プラン提供開始時' },
@@ -51,7 +51,7 @@ export default function TokuteiPage() {
 
       <p style={{ marginTop: 24, color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.8 }}>
         ※ 代表者・所在地・電話番号は、消費者からの請求があれば遅滞なく開示いたします。<br />
-        　 お問い合わせ先：hanaosaka87@gmail.com
+        　 お問い合わせ先：hana@trickster.biz
       </p>
       <AppFooter />
     </main>

@@ -4,21 +4,23 @@ import nodemailer from 'nodemailer';
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { name, prefecture, addr, comment } = body;
+  const { name, prefecture, addr, comment, machine_types, prize_genres } = body;
 
   if (!name || !prefecture) {
     return NextResponse.json({ error: '店舗名と都道府県は必須です' }, { status: 400 });
   }
 
   // Supabase が設定されていれば DB 保存
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
     try {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       );
       const { error } = await supabase.from('store_reports').insert({
         name, prefecture, addr: addr || null, comment: comment || null,
+        machine_types: Array.isArray(machine_types) ? machine_types : [],
+        prize_genres: Array.isArray(prize_genres) ? prize_genres : [],
         status: 'approved',
       });
       if (error) throw error;

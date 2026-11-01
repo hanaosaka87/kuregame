@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import AppFooter from '@/components/AppFooter';
+import { amazonSearchUrl } from '@/lib/amazon';
+import { getHookSettingVideos } from '@/lib/hookVideos';
 
 export const metadata: Metadata = {
   title: 'クレーンゲーム攻略ガイド | クレゲー',
@@ -35,16 +37,16 @@ const TECHNIQUES: Technique[] = [
     tagColor: 'var(--accent)',
     difficulty: 3,
     winRate: '高め',
-    summary: '円盤（UFO）型のアームからチェーンでフックが吊るされており、景品の台座についたリングにフックを引っかけると景品ごと獲得できる設定。カップ麺やPETボトル飲料が景品の台として最もよく見かける。',
+    summary: '円盤（UFO）型のアームからチェーンでリングが吊るされており、景品の台座についたフックに引っかけると景品ごと獲得できる設定。日用品・カップ麺やお菓子・PETボトル飲料・食品など色々な景品の台としてブレーク中です。',
     mechanism:
-      'アームは爪ではなく円盤（UFO）型で、チェーンの先にフック（かぎ型）が吊り下がっている。\n\n景品（カップ麺・飲料ボトルなど）は台座カードにリングが取り付けられた状態で並んでいる。アームをXY軸で動かし、フックが落下したときにリングの穴を通るよう位置を合わせる。\n\nフックはチェーンで揺れながら降りてくるため、「台座にリングが着地した瞬間に穴の向きが合うか」がポイント。うまく引っかかれば景品ごと取り出し口へ。',
+      'アームは爪ではなく円盤（UFO）型で、チェーンの先にリング（輪っか状のパーツ）が吊り下がっている。\n\n景品（カップ麺・飲料ボトルなど）は台座カードにフック（かぎ型のパーツ）が取り付けられた状態で並んでいる。アームをXY軸で動かし、リングが落下したときにフックの位置に合うよう調整する。\n\nリングはチェーンで揺れながら降りてくるため、「台座のフックにリングが引っかかる瞬間に位置が合うか」がポイント。うまく引っかかれば景品ごと取り出し口へ。',
     tips: [
-      '先にリングの穴の向き（正面を向いているか横向きか）を確認する',
-      'フックの真下にリングの穴が来るようXY位置を合わせる。ずれているとフックが滑る',
+      '先にフックの向き（正面を向いているか横向きか）を確認する',
+      'リングの真下にフックが来るようXY位置を合わせる。ずれているとリングが滑る',
       'チェーンが揺れるので、振り子の最下点（まっすぐ下がった瞬間）を狙って降下させる',
-      '一度で決まらない場合は、フックが少しリングに触れた位置を基準に次の1手を微調整',
-      '景品を横から観察して台座の高さとリングの位置関係を把握してから操作する',
-      '同じ台の他のリングが引っかかりやすい角度になっているものを先に狙う',
+      '一度で決まらない場合は、リングが少しフックに触れた位置を基準に次の1手を微調整',
+      '景品を横から観察して台座の高さとフックの位置関係を把握してから操作する',
+      '同じ台の他のフックが引っかかりやすい角度になっているものを先に狙う',
     ],
     bestFor: 'カップ麺・PETボトル飲料・缶飲料・お菓子などの食品景品全般',
     featured: true,
@@ -209,12 +211,13 @@ function Stars({ n }: { n: Difficulty }) {
   );
 }
 
-export default function GuidePage() {
+export default async function GuidePage() {
   const featured = TECHNIQUES.filter(t => t.featured);
   const others = TECHNIQUES.filter(t => !t.featured);
+  const hookVideos = await getHookSettingVideos();
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 96px', background: 'radial-gradient(120% 60% at 50% 0%,#260a52 0%,#0a0018 55%,#05000f 100%)' }}>
+    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '0 0 96px', background: 'radial-gradient(120% 60% at 50% 0%,#260a52 0%,#0a0018 55%,#05000f 100%)' }}>
 
       {/* PAGE HEADER */}
       <div style={{ padding: '28px 16px 0' }}>
@@ -226,9 +229,13 @@ export default function GuidePage() {
             🕹️ クレゲー攻略ガイド
           </h1>
         </div>
-        <p style={{ color: 'var(--lav)', fontSize: '.8rem', lineHeight: 1.7, marginBottom: 24 }}>
+        <p style={{ color: 'var(--lav)', fontSize: '.8rem', lineHeight: 1.7, marginBottom: 8 }}>
           ゲームセンターのクレーンゲームには様々な種類があります。
           それぞれの仕組みと攻略のコツを押さえて、元取り率を上げよう！
+        </p>
+        <p style={{ fontSize: '.78rem', marginBottom: 24 }}>
+          アプリの使い方・チャレンジの記録方法は
+          <Link href="/howto" style={{ color: 'var(--accent)', fontWeight: 700 }}> 遊び方ガイド</Link> をご覧ください。
         </p>
       </div>
 
@@ -259,6 +266,13 @@ export default function GuidePage() {
             <p style={{ fontSize: '.84rem', color: '#f0e4ff', lineHeight: 1.8, marginBottom: 16, fontWeight: 700 }}>
               {t.summary}
             </p>
+
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hook-nyanda-coffee.png"
+              alt="フック設定の狙い方解説"
+              style={{ width: '100%', display: 'block', borderRadius: 8, marginBottom: 16, border: '1px solid var(--line)' }}
+            />
 
             {/* 仕組み */}
             <div style={{ background: 'rgba(0,0,0,.3)', border: '1px solid var(--line)', padding: '12px 14px', marginBottom: 14 }}>
@@ -326,6 +340,15 @@ export default function GuidePage() {
             <div style={{ padding: '0 14px 16px', borderTop: '1px solid var(--line-soft)' }}>
               <p style={{ fontSize: '.8rem', color: 'var(--lav)', lineHeight: 1.8, margin: '12px 0 12px', fontWeight: 700 }}>{t.summary}</p>
 
+              {t.id === 'arm' && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/arm-crane-guide.png"
+                  alt="アーム（クレーン）の狙い方解説"
+                  style={{ width: '100%', display: 'block', borderRadius: 8, marginBottom: 12, border: '1px solid var(--line)' }}
+                />
+              )}
+
               {/* 仕組み */}
               <div style={{ background: 'rgba(0,0,0,.3)', border: '1px solid var(--line)', padding: '10px 12px', marginBottom: 12 }}>
                 <div style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--cyan)', letterSpacing: '.08em', marginBottom: 7 }}>🔬 仕組み</div>
@@ -362,6 +385,27 @@ export default function GuidePage() {
         ))}
       </div>
 
+      {/* おすすめグッズ（Amazonアソシエイト） */}
+      <div style={{ margin: '28px 16px 0' }}>
+        <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '.06em', marginBottom: 10 }}>🛒 攻略に役立つおすすめグッズ</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { label: 'クレーンゲーム 攻略本', kw: 'クレーンゲーム 攻略本' },
+            { label: 'ぬいぐるみ 収納袋', kw: 'ぬいぐるみ 収納袋 大きい' },
+            { label: 'プライズ 飾り棚・ディスプレイ', kw: 'フィギュア ディスプレイ 収納 棚' },
+          ].map(item => (
+            <a key={item.kw} href={amazonSearchUrl(item.kw)} target="_blank" rel="noopener noreferrer sponsored"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--card)', border: '1px solid var(--line)', padding: '12px 14px', textDecoration: 'none', color: 'var(--text)' }}>
+              <span style={{ fontSize: '.82rem' }}>{item.label}</span>
+              <span style={{ fontSize: '.7rem', color: '#ff9900', fontWeight: 700 }}>Amazonで見る →</span>
+            </a>
+          ))}
+        </div>
+        <p style={{ fontSize: '.62rem', color: 'var(--muted2)', marginTop: 8 }}>
+          ※Amazonアソシエイト・プログラムの参加者として、当サイトは適格販売により収入を得ています。
+        </p>
+      </div>
+
       {/* CTAバナー */}
       <div style={{ margin: '28px 16px 0', background: 'linear-gradient(135deg,rgba(255,61,175,.12),rgba(196,0,255,.06))', border: '1px solid rgba(255,61,175,.4)', padding: '18px 16px', textAlign: 'center' }}>
         <p style={{ fontWeight: 900, fontSize: '1rem', marginBottom: 6 }}>🎯 理解したら実際に挑戦しよう！</p>
@@ -375,6 +419,29 @@ export default function GuidePage() {
           🕹️ チャレンジ開始！
         </Link>
       </div>
+
+      {/* フック設定 関連動画（YouTube新着順・週1回自動更新） */}
+      {hookVideos.length > 0 && (
+        <div style={{ margin: '28px 16px 0' }}>
+          <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '.06em', marginBottom: 10 }}>
+            🎥 フック設定、YouTubeでの攻略関連はこちら
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {hookVideos.map(v => (
+              <a key={v.videoId} href={v.url} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card)', border: '1px solid var(--line)', padding: '12px 14px', textDecoration: 'none', color: 'var(--text)' }}>
+                <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>▶️</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '.78rem', lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{v.title}</div>
+                  <div style={{ fontSize: '.64rem', color: 'var(--muted)', marginTop: 3 }}>
+                    {v.channelTitle && <>{v.channelTitle} ・ </>}{new Date(v.publishedAt).toLocaleDateString('ja-JP')}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AppFooter />
     </main>

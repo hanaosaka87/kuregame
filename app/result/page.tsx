@@ -1,15 +1,58 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CHALLENGE_LABELS, EFFICIENCY_GRADE } from '@/lib/constants';
+import { shareApp } from '@/lib/share';
+import { resizeImage } from '@/lib/image';
 import AppFooter from '@/components/AppFooter';
+import ShareIcons from '@/components/ShareIcons';
 
 function ResultContent() {
   const params = useSearchParams();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [inviteToast, setInviteToast] = useState('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploaded, setPhotoUploaded] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+
+  const sessionId = params.get('sessionId') || '';
+  const isNewBest = params.get('newBest') === '1' && !!sessionId;
+
+  async function handleBestPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !sessionId) return;
+    setPhotoError('');
+    setPhotoPreview(URL.createObjectURL(file));
+    setPhotoUploading(true);
+    try {
+      const { base64, mediaType } = await resizeImage(file);
+      const res = await fetch(`/api/sessions/${sessionId}/photo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mediaType }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setPhotoUploaded(true);
+    } catch {
+      setPhotoError('写真の保存に失敗しました。もう一度お試しください。');
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
+  async function handleInviteFriends() {
+    const result = await shareApp();
+    if (result === 'copied') {
+      setInviteToast('招待メッセージをコピーしました！');
+      setTimeout(() => setInviteToast(''), 2500);
+    }
+  }
   const [activeTab, setActiveTab] = useState<'result' | 'share'>('result');
 
   const spent      = Number(params.get('spent') || 0);
@@ -20,6 +63,9 @@ function ResultContent() {
   const nickname   = params.get('nickname') || '名無しハンター';
   const prefecture = params.get('prefecture') || '';
   const skipped    = params.get('skipped') === '1';
+  const streakBonus = Number(params.get('streakBonus') || 0);
+  const gachaBonus  = Number(params.get('gachaBonus') || 0);
+  const baseRate    = Number(params.get('baseRate') || 0);
 
   const grade  = EFFICIENCY_GRADE(rate);
   const profit = retail - spent;
@@ -33,7 +79,7 @@ function ResultContent() {
     prefecture ? `📍 ${prefecture}` : '',
     ``,
     `#クレゲ #クレーンゲーム #ゲーセン ${prefecture ? `#${prefecture.replace('県','').replace('都','').replace('府','')}` : ''}`,
-    `https://kuregame.vercel.app`,
+    `https://cranegame.hana.trickster.biz`,
   ].filter(Boolean).join('\n');
 
   async function copyText() {
@@ -46,11 +92,9 @@ function ResultContent() {
     }
   }
 
-  const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-  const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(shareText)}`;
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 20px 100px' }}>
+    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
       {/* グレード */}
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: '3.5rem', marginBottom: 6 }}>{grade.emoji}</div>
@@ -93,7 +137,54 @@ function ResultContent() {
                 </span>
               )}
             </div>
+            {(streakBonus > 0 || gachaBonus > 0) && (
+              <div style={{ marginTop: 10, fontSize: '0.78rem', color: 'var(--gold)' }}>
+                {streakBonus > 0 && <div>🔥 連続ログインボーナス +{streakBonus}%</div>}
+                {gachaBonus > 0 && <div>🎰 本日のガチャボーナス +{gachaBonus}%</div>}
+                <div>（{baseRate}% → {rate}%）</div>
+              </div>
+            )}
           </div>
+
+          {/* 自己ベスト達成時：カート内写真アップロード */}
+          {isNewBest && (
+            <div style={{ background: 'var(--card)', borderRadius: 16, padding: 16, marginBottom: 20, border: '2px solid var(--gold)' }}>
+              <p style={{ fontWeight: 900, fontSize: '0.95rem', marginBottom: 4, color: 'var(--gold)' }}>
+                👑 自己ベスト更新おめでとう！
+              </p>
+              <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 12, lineHeight: 1.6 }}>
+                カート・かごに山盛りの獲得品を写真に残して、マイ戦績に飾りませんか？
+              </p>
+
+              {photoPreview && (
+                <div style={{ marginBottom: 12, borderRadius: 10, overflow: 'hidden', border: '2px solid var(--card2)' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photoPreview} alt="最高ゲット写真プレビュー" style={{ width: '100%', display: 'block' }} />
+                </div>
+              )}
+
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleBestPhotoChange}
+              />
+
+              {photoUploaded ? (
+                <div style={{ textAlign: 'center', color: 'var(--green)', fontSize: '0.85rem', fontWeight: 700 }}>✅ 保存しました！マイ戦績に表示されます</div>
+              ) : (
+                <button
+                  className="btn-primary"
+                  disabled={photoUploading}
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  {photoUploading ? '保存中...' : '📸 写真を選んで保存'}
+                </button>
+              )}
+              {photoError && <p style={{ color: 'var(--accent)', fontSize: '0.78rem', marginTop: 8 }}>{photoError}</p>}
+            </div>
+          )}
 
           {/* 内訳 */}
           <div style={{ background: 'var(--card)', borderRadius: 16, padding: 20, marginBottom: 20 }}>
@@ -157,54 +248,23 @@ function ResultContent() {
           </button>
 
           {/* SNS投稿ボタン */}
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 12 }}>
-              投稿先を選んでください（TikTok・Instagram はテキストをコピーしてからアプリで投稿）
+          <ShareIcons text={shareText} />
+          <p style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: -8, marginBottom: 16 }}>
+            ※YouTube・TikTok・Instagramはテキストをコピーしてからアプリで投稿してください
+          </p>
+
+          {/* 友達招待 */}
+          <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, marginBottom: 20, border: '2px dashed var(--accent)' }}>
+            <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 4 }}>🤝 友達を誘って対戦しよう！</p>
+            <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 12, lineHeight: 1.6 }}>
+              友達・カップル・家族を誘って「対戦モード」で元取り率を競えます。
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* X (Twitter) */}
-              <a href={xUrl} target="_blank" rel="noopener noreferrer">
-                <button style={{
-                  width: '100%', padding: '14px', borderRadius: 12, border: '2px solid #1d9bf0',
-                  background: 'rgba(29,155,240,0.1)', color: '#1d9bf0', fontWeight: 700, fontSize: '0.95rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#1d9bf0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.735-8.845L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-                  X (Twitter) に投稿
-                </button>
-              </a>
-
-              {/* LINE */}
-              <a href={lineUrl} target="_blank" rel="noopener noreferrer">
-                <button style={{
-                  width: '100%', padding: '14px', borderRadius: 12, border: '2px solid #06c755',
-                  background: 'rgba(6,199,85,0.1)', color: '#06c755', fontWeight: 700, fontSize: '0.95rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}>
-                  💬 LINEでシェア
-                </button>
-              </a>
-
-              {/* TikTok */}
-              <button onClick={async () => { await copyText(); window.open('https://www.tiktok.com', '_blank'); }}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 12, border: '2px solid #010101',
-                  background: 'rgba(1,1,1,0.3)', color: 'var(--text)', fontWeight: 700, fontSize: '0.95rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}>
-                <span style={{ fontSize: '1.1rem' }}>🎵</span> TikTok（テキストをコピーしてから投稿）
-              </button>
-
-              {/* Instagram */}
-              <button onClick={async () => { await copyText(); window.open('https://www.instagram.com', '_blank'); }}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 12, border: '2px solid #e1306c',
-                  background: 'rgba(225,48,108,0.1)', color: '#e1306c', fontWeight: 700, fontSize: '0.95rem',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}>
-                <span style={{ fontSize: '1.1rem' }}>📸</span> Instagram（テキストをコピーしてから投稿）
-              </button>
-            </div>
+            <button className="btn-primary" onClick={handleInviteFriends}>友達を誘う</button>
+            {inviteToast && (
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--green)', marginTop: 8 }}>
+                ✅ {inviteToast}
+              </div>
+            )}
           </div>
 
           <Link href="/challenge"><button className="btn-secondary">🎯 もう一回チャレンジ！</button></Link>

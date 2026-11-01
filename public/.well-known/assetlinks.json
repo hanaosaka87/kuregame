@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "biz.trickster.hana.cranegame.twa",
+    "sha256_cert_fingerprints": ["3A:30:98:15:D3:C4:70:0B:92:11:32:7E:73:D2:4B:29:A3:A1:7B:F4:9D:59:BF:FE:59:EC:A1:84:6F:A4:EC:AF"]
+  }
+}]

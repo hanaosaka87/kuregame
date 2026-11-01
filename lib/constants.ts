@@ -8,12 +8,16 @@ export const PREFECTURES = [
   '熊本県','大分県','宮崎県','鹿児島県','沖縄県',
 ];
 
+// /storesの新店投稿フォーム（店舗の設置機種）・/challengeの挑戦機種選択で共通利用（表記統一のため）
+export const MACHINE_TYPE_OPTIONS = ['フック設定', 'アーム（クレーン）', '橋渡し', 'タワー崩し', '一本橋・棒渡し', 'プッシュ・プレート', 'すくい取り'];
+
 export const CHALLENGE_LABELS: Record<string, string> = {
   '1000':  '1,000円チャレンジ',
   '3000':  '3,000円チャレンジ',
   '5000':  '5,000円チャレンジ',
   '10000': '1万円チャレンジ',
   'free':  'フリーモード',
+  'battle': '対戦モード',
 };
 
 export const EFFICIENCY_GRADE = (rate: number) => {
