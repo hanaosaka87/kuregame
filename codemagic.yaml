@@ -13,6 +13,7 @@ workflows:
         - app_store_credentials
       vars:
         BUNDLE_ID: "biz.trickster.hana.cranegame.app"
+        APP_STORE_APP_ID: "6829718126"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
       node: lts
@@ -32,7 +33,7 @@ workflows:
       - name: ビルド番号を自動インクリメント（App Store Connectの最新値+1）
         script: |
           cd ios/App
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$BUNDLE_ID")
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$APP_STORE_APP_ID")
           agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
       - name: 署名用キーチェーンを初期化
         script: keychain initialize
