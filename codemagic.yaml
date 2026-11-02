@@ -58,9 +58,9 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
-        beta_groups:
-          - 社内確認
-        # beta_groupsを内部テストグループのみに限定することで、外部テスト審査(Beta App Review)を回避し
-        # 審査不要な社内確認のみで即座に配信する。本番公開まで自動化する場合はsubmit_to_app_storeもtrueにし
-        # 審査提出まで自動化できるが、最初はTestFlight配信のみに留め、動作確認後に手動でApp Store提出する運用を推奨
+        submit_to_testflight: false
+        # 内部テストグループ「社内確認」は作成時に「自動配信を有効にする」をONにしているため、
+        # Apple側がビルド処理完了後に自動で配信する。Codemagicのbeta_groupsは外部テストグループ専用で
+        # 内部グループを指定するとエラーになるため使用しない（submit_to_testflightもfalseのままでよい）。
+        # 本番公開まで自動化する場合はsubmit_to_app_storeもtrueにし審査提出まで自動化できるが、
+        # 最初はTestFlight配信のみに留め、動作確認後に手動でApp Store提出する運用を推奨
