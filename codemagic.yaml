@@ -13,7 +13,7 @@ workflows:
         - app_store_credentials
       vars:
         BUNDLE_ID: "biz.trickster.hana.cranegame.app"
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
       node: lts
       xcode: latest
@@ -35,7 +35,7 @@ workflows:
       - name: IPAをビルド
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
