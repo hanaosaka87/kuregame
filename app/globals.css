@@ -46,7 +46,7 @@ button { font-family: inherit; }
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  padding-bottom: 96px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
   background: radial-gradient(120% 60% at 50% 0%, #260a52 0%, var(--bg) 55%, var(--bg-deep) 100%);
   box-shadow: 0 0 80px rgba(120,0,200,.35);
 }
@@ -55,7 +55,7 @@ button { font-family: inherit; }
 .site-header {
   position: sticky; top: 0; z-index: 60;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 10px 16px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
   background: rgba(10,0,24,.82); backdrop-filter: blur(12px);
   border-bottom: 2px solid rgba(255,61,175,.35);
 }
@@ -291,6 +291,7 @@ button { font-family: inherit; }
   display: grid; grid-template-columns: repeat(8,1fr);
   background: rgba(10,0,24,.92); backdrop-filter: blur(12px);
   border-top: 2px solid rgba(255,61,175,.35);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 1px; color: var(--muted); font-size: .48rem; font-weight: 700; text-decoration: none; }
 .nav-item span { font-size: 1.05rem; }
