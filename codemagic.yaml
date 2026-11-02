@@ -29,6 +29,15 @@ workflows:
         script: npm install
       - name: Capacitor sync（Webアセットをネイティブプロジェクトへ反映）
         script: npx cap sync ios
+      - name: 署名用キーチェーンを初期化
+        script: keychain initialize
+      - name: 配布用証明書・プロビジョニングプロファイルを自動取得
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+      - name: 証明書をキーチェーンに追加
+        script: keychain add-certificates
       - name: Xcodeの自動署名を設定
         script: |
           xcode-project use-profiles
