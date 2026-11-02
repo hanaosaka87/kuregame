@@ -10,6 +10,11 @@ const config: CapacitorConfig = {
     url: 'https://cranegame.hana.trickster.biz',
     cleartext: false,
   },
+  ios: {
+    // コンテンツがステータスバー（時計・電波アイコン等）の下に隠れる問題の対策。
+    // 常にセーフエリア分の余白を確保してWebViewを配置する
+    contentInset: 'always',
+  },
 };
 
 export default config;
