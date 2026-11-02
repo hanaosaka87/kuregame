@@ -29,6 +29,11 @@ workflows:
         script: npm install
       - name: Capacitor sync（Webアセットをネイティブプロジェクトへ反映）
         script: npx cap sync ios
+      - name: ビルド番号を自動インクリメント（App Store Connectの最新値+1）
+        script: |
+          cd ios/App
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-build-number "$BUNDLE_ID")
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
       - name: 署名用キーチェーンを初期化
         script: keychain initialize
       - name: 配布用証明書・プロビジョニングプロファイルを自動取得
