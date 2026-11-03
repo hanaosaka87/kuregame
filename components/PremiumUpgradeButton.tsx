@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { isNativeIOSApp } from '@/lib/iosApp';
 
 // NEXT_PUBLIC_PREMIUM_ENABLED=true になるまで非表示
 const PREMIUM_ENABLED = process.env.NEXT_PUBLIC_PREMIUM_ENABLED === 'true';
@@ -14,6 +15,24 @@ interface Props {
 
 export default function PremiumUpgradeButton({ userId, email, plan, foundingMember }: Props) {
   const [loading, setLoading] = useState<'standard' | 'premium' | 'portal' | null>(null);
+  const [isIOSApp, setIsIOSApp] = useState(false);
+
+  useEffect(() => {
+    setIsIOSApp(isNativeIOSApp());
+  }, []);
+
+  // Apple App Store審査ガイドライン3.1.1対応：iOSアプリ版ではStripeの購入・管理導線を
+  // 一切表示しない（全機能が無料開放されているため、そもそも購入の必要がない）
+  if (isIOSApp) {
+    return (
+      <div style={{
+        background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)',
+        borderRadius: 12, padding: '12px 14px', fontSize: '.8rem', color: 'var(--text)', lineHeight: 1.6,
+      }}>
+        📱 アプリ版では、チャレンジ記録を含む全機能を無料でご利用いただけます。
+      </div>
+    );
+  }
 
   if (!PREMIUM_ENABLED) return null;
 

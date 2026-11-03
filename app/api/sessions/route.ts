@@ -5,6 +5,7 @@ import { getStreakBonusPercent } from '@/lib/streakBonus';
 import { todayStr } from '@/lib/gacha';
 import { getPointsAdminClient, awardPoints, pointsForSpend, POINT_REASONS } from '@/lib/points';
 import { isPremiumUser } from '@/lib/subscription';
+import { isIOSAppRequest } from '@/lib/iosApp';
 
 function isReady() {
   return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -28,6 +29,11 @@ export async function POST(req: NextRequest) {
     if (!isReady()) {
       return NextResponse.json({ session: null, skipped: true });
     }
+
+    // Apple App Store審査ガイドライン3.1.1対応：iOSアプリ版はStripe外部決済をアプリ内に
+    // 表示できないため、有料会員限定の記録機能をiOSアプリからのリクエストに限り無料開放する
+    // （Android/Web版は従来通りスタンダード会員以上が必要。lib/iosApp.ts参照）
+    const isIOSApp = isIOSAppRequest(req.headers.get('user-agent'));
 
     const total_retail_value = prizes.reduce((s: number, p: Prize) => s + p.retail_price * p.quantity, 0);
     const prize_count = prizes.reduce((s: number, p: Prize) => s + p.quantity, 0);
@@ -79,7 +85,8 @@ export async function POST(req: NextRequest) {
       }
 
       // ソロ記録は創業メンバー特典、またはスタンダード以上の有効な会員のみ許可
-      if (isSoloMode && !prof?.founding_member) {
+      // （iOSアプリ版はApple審査対応のため無料開放。isIOSApp参照）
+      if (isSoloMode && !prof?.founding_member && !isIOSApp) {
         const hasActivePlan = await isPremiumUser(user_id);
         if (!hasActivePlan) {
           return NextResponse.json(

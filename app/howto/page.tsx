@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import AppFooter from '@/components/AppFooter';
 import { isLaunchCampaignActive, currentSpendYenPerPoint } from '@/lib/points';
+import { isIOSAppRequest } from '@/lib/iosApp';
 
 export const metadata: Metadata = {
   title: '遊び方ガイド | クレゲー',
@@ -24,7 +26,8 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function HowToPage() {
+export default async function HowToPage() {
+  const isIOSApp = isIOSAppRequest((await headers()).get('user-agent'));
   return (
     <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '0 0 96px', background: 'radial-gradient(120% 60% at 50% 0%,#260a52 0%,#0a0018 55%,#05000f 100%)' }}>
 
@@ -197,7 +200,10 @@ export default function HowToPage() {
         <Card>
           <SectionTitle icon="🔐">ログインするとできること</SectionTitle>
           <p style={{ fontSize: '.82rem', color: 'var(--lav)', lineHeight: 1.8 }}>
-            チャレンジを記録するにはログイン＋スタンダード会員以上のご登録が必要です。<strong style={{ color: 'var(--text)' }}>ログインすると戦績が自分のアカウントに蓄積</strong>され、マイ戦績ページでいつでも見返せるようになります。都道府県の月間チャンピオンを目指すなら、ログインは必須です。
+            {isIOSApp
+              ? <>チャレンジを記録するにはログインが必要です（アプリ版は記録機能も無料でご利用いただけます）。</>
+              : <>チャレンジを記録するにはログイン＋スタンダード会員以上のご登録が必要です。</>}{' '}
+            <strong style={{ color: 'var(--text)' }}>ログインすると戦績が自分のアカウントに蓄積</strong>され、マイ戦績ページでいつでも見返せるようになります。都道府県の月間チャンピオンを目指すなら、ログインは必須です。
           </p>
         </Card>
 

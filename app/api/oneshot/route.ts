@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { OneshotRecord } from '@/lib/supabase';
 import { getPointsAdminClient, awardPoints, pointsForSpend, POINT_REASONS } from '@/lib/points';
 import { isPremiumUser } from '@/lib/subscription';
+import { isIOSAppRequest } from '@/lib/iosApp';
 
 const ONESHOT_SPEND = 100; // 一撃ゲットの定義：100円（1プレイ）でゲットしたこと
 // 「一撃連チャン」＝立て続けに一撃ゲットできた回数。前回の一撃ゲット登録からこの分数以内に
@@ -71,7 +72,9 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     // 通常のソロ記録と同じく、スタンダード会員以上（または創業メンバー特典）が必須
-    if (!prof.founding_member) {
+    // （iOSアプリ版はApple審査対応のため無料開放。lib/iosApp.ts参照）
+    const isIOSApp = isIOSAppRequest(req.headers.get('user-agent'));
+    if (!prof.founding_member && !isIOSApp) {
       const hasActivePlan = await isPremiumUser(user_id);
       if (!hasActivePlan) {
         return NextResponse.json(

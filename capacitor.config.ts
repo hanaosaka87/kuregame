@@ -14,6 +14,9 @@ const config: CapacitorConfig = {
     // コンテンツがステータスバー（時計・電波アイコン等）の下に隠れる問題の対策。
     // 常にセーフエリア分の余白を確保してWebViewを配置する
     contentInset: 'always',
+    // サーバー側でiOSアプリからのリクエストを判別するためのUser-Agentマーカー
+    // （Apple審査対応：有料会員限定機能の無料開放・Stripe購入導線の非表示に使用。lib/iosApp.ts参照）
+    appendUserAgent: 'KuregameIOSApp',
   },
 };
 

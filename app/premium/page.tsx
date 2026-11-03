@@ -5,6 +5,7 @@ import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/useAuth';
 import AppFooter from '@/components/AppFooter';
 import PremiumUpgradeButton from '@/components/PremiumUpgradeButton';
+import { isNativeIOSApp } from '@/lib/iosApp';
 
 const FREE_FEATURES = [
   '全国・都道府県別・月間ランキングの閲覧',
@@ -26,6 +27,11 @@ const PREMIUM_FEATURES = [
 export default function PremiumPage() {
   const { user, profile } = useAuth();
   const [plan, setPlan] = useState<'standard' | 'premium' | null>(null);
+  const [isIOSApp, setIsIOSApp] = useState(false);
+
+  useEffect(() => {
+    setIsIOSApp(isNativeIOSApp());
+  }, []);
 
   useEffect(() => {
     if (!user) { setPlan(null); return; }
@@ -47,9 +53,15 @@ export default function PremiumPage() {
   return (
     <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4 }}>💎 クレゲーの会員プランについて</h1>
-      <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 24 }}>
-        ランキングの閲覧やガイドは無料でご覧いただけますが、<strong style={{ color: 'var(--text)' }}>チャレンジを記録してランキングに参加するにはスタンダード以上のご登録が必要</strong>です。
-      </p>
+      {isIOSApp ? (
+        <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 24 }}>
+          📱 <strong style={{ color: 'var(--text)' }}>アプリ版では、チャレンジ記録を含む全機能を無料でご利用いただけます。</strong>以下は参考情報として、Web版での会員プランの内容です。
+        </p>
+      ) : (
+        <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 24 }}>
+          ランキングの閲覧やガイドは無料でご覧いただけますが、<strong style={{ color: 'var(--text)' }}>チャレンジを記録してランキングに参加するにはスタンダード以上のご登録が必要</strong>です。
+        </p>
+      )}
 
       <div style={{ background: 'var(--card)', borderRadius: 14, padding: '16px', marginBottom: 16 }}>
         <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 10 }}>🆓 無料会員（ずっと無料）</h3>
