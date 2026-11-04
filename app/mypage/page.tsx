@@ -66,7 +66,7 @@ function formatDate(iso: string) {
 }
 
 export default function MyPage() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<'standard' | 'premium' | null>(null);
@@ -85,6 +85,33 @@ export default function MyPage() {
   const [snsYoutube, setSnsYoutube] = useState('');
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [accountDeleteOpen, setAccountDeleteOpen] = useState(false);
+  const [accountDeleteConfirmText, setAccountDeleteConfirmText] = useState('');
+  const [accountDeleting, setAccountDeleting] = useState(false);
+  const [accountDeleteError, setAccountDeleteError] = useState('');
+
+  async function deleteAccount() {
+    if (!user || accountDeleteConfirmText !== '削除') return;
+    setAccountDeleting(true);
+    setAccountDeleteError('');
+    try {
+      const { data: sessionData } = await getSupabase().auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('認証情報の取得に失敗しました');
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '削除に失敗しました');
+      await signOut();
+      window.location.href = '/';
+    } catch (e) {
+      setAccountDeleteError(e instanceof Error ? e.message : '削除に失敗しました。もう一度お試しください。');
+    } finally {
+      setAccountDeleting(false);
+    }
+  }
 
   async function deleteSession(id: string) {
     if (!user) return;
@@ -1151,6 +1178,51 @@ export default function MyPage() {
           onChange={handleShowcasePhotoChange}
         />
         {showcaseError && <p style={{ color: 'var(--accent)', fontSize: '0.78rem', marginTop: 8 }}>{showcaseError}</p>}
+      </div>
+
+      <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px dashed var(--card2)' }}>
+        <button
+          type="button"
+          onClick={() => setAccountDeleteOpen((v) => !v)}
+          style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+        >
+          ⚠️ アカウントを削除する
+        </button>
+        {accountDeleteOpen && (
+          <div style={{ marginTop: 12, background: 'var(--card)', borderRadius: 14, padding: 16, border: '2px solid var(--accent)' }}>
+            <p style={{ fontSize: '0.8rem', marginBottom: 8 }}>
+              アカウントを削除すると、プロフィール・チャレンジ記録・獲得アイテム写真・ポイント・プレミアム会員情報など、あなたのすべてのデータが削除されます。<strong>この操作は取り消せません。</strong>
+            </p>
+            <p style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 10 }}>
+              削除を実行するには「削除」と入力してください。
+            </p>
+            <input
+              type="text"
+              value={accountDeleteConfirmText}
+              onChange={(e) => setAccountDeleteConfirmText(e.target.value)}
+              placeholder="削除"
+              style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '2px solid var(--card2)', background: 'var(--bg)', color: 'var(--fg)', fontSize: '0.85rem', marginBottom: 10 }}
+            />
+            {accountDeleteError && <p style={{ color: 'var(--accent)', fontSize: '0.78rem', marginBottom: 10 }}>{accountDeleteError}</p>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={deleteAccount}
+                disabled={accountDeleteConfirmText !== '削除' || accountDeleting}
+                style={{ background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: '0.8rem', fontWeight: 700, cursor: accountDeleteConfirmText === '削除' ? 'pointer' : 'not-allowed', opacity: accountDeleteConfirmText === '削除' ? 1 : 0.5 }}
+              >
+                {accountDeleting ? '削除中...' : 'アカウントを完全に削除する'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAccountDeleteOpen(false); setAccountDeleteConfirmText(''); setAccountDeleteError(''); }}
+                style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <AppFooter />
