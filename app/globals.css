@@ -102,6 +102,12 @@ button { font-family: inherit; }
   .hero-img { transform: scale(1.22); transform-origin: 50% 22%; }
   .hero-veil { background: linear-gradient(180deg, rgba(5,0,15,.62) 0%, rgba(5,0,15,.15) 30%, transparent 46%, rgba(10,0,24,.85) 76%, var(--bg) 100%); }
 }
+@media (min-width: 821px) {
+  /* 2026-11-07: .appの820px幅上限を撤廃し全体表示にしたことで、.heroの固定height:372pxのまま
+     横幅だけ広がるとobject-fit:coverが大きくズームされ画像上部（バナー等）が大きく切れてしまう。
+     元のレイアウト比率（820px幅で372px高さ）を維持しつつ、ウィンドウ幅に応じて高さも広げる */
+  .hero { height: min(45vw, 700px); }
+}
 .hero-crt {
   position: absolute; inset: 0;
   background: repeating-linear-gradient(180deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
