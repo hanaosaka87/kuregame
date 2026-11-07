@@ -524,7 +524,7 @@ export default function StoresPage() {
       {showEventForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,0,15,.88)', backdropFilter: 'blur(6px)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
           onClick={() => { if (!eventSubmitting) setShowEventForm(false); }}>
-          <div style={{ width: '100%', maxWidth: 'min(100vw, 820px)', margin: '0 auto', maxHeight: '88vh', overflowY: 'auto', background: 'var(--card)', borderTop: '2px solid var(--gold)', padding: '24px 20px 40px' }}
+          <div style={{ width: '100%', maxWidth: '100%', margin: '0 auto', maxHeight: '88vh', overflowY: 'auto', background: 'var(--card)', borderTop: '2px solid var(--gold)', padding: '24px 20px 40px' }}
             onClick={e => e.stopPropagation()}>
             {eventDone ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -597,7 +597,7 @@ export default function StoresPage() {
       {showReport && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,0,15,.88)', backdropFilter: 'blur(6px)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}
           onClick={() => { if (!submitting) setShowReport(false); }}>
-          <div style={{ width: '100%', maxWidth: 'min(100vw, 820px)', margin: '0 auto', maxHeight: '88vh', overflowY: 'auto', background: 'var(--card)', borderTop: '2px solid var(--accent)', padding: '24px 20px 40px' }}
+          <div style={{ width: '100%', maxWidth: '100%', margin: '0 auto', maxHeight: '88vh', overflowY: 'auto', background: 'var(--card)', borderTop: '2px solid var(--accent)', padding: '24px 20px 40px' }}
             onClick={e => e.stopPropagation()}>
             {reportDone ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>

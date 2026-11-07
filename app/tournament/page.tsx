@@ -47,7 +47,7 @@ export default function TournamentPage() {
   }, [month]);
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4 }}>🏯 全国大会への道</h1>
       <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 16, lineHeight: 1.7 }}>
         各都道府県の月間チャンピオンが所属地域ブロックで競い、地域No.1が四半期プレーオフ・年1回の全国大会へ進みます。

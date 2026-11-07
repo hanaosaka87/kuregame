@@ -90,7 +90,7 @@ export default function AuthPage() {
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚙️</div>
         <p style={{ color: 'var(--muted)' }}>Supabase設定後にユーザー登録が有効になります。</p>
         <button className="btn-secondary" onClick={() => router.push('/')} style={{ marginTop: 20, maxWidth: 200, margin: '20px auto 0' }}>TOPへ戻る</button>
@@ -99,7 +99,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>
         {mode === 'login' ? '🔑 ログイン' : '🎮 新規登録'}
       </h1>

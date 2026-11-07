@@ -39,9 +39,10 @@ button { font-family: inherit; }
 
 /* ===== APP CONTAINER ===== */
 .app {
-  /* スマホでは従来どおり画面幅いっぱい、PC等の広い画面では820pxまで広げて中央表示する
-     （社長指摘：PC・スマホとも480px固定だと広い画面で左右が真っ黒に見切れて見にくかった） */
-  max-width: min(100vw, 820px);
+  /* PC等の広い画面でも左右に余白を作らず全体表示する（旅コンプリ等の他アプリと同じ方針、2026-11-07対応）
+     旧: max-width: min(100vw, 820px) で820pxに制限していたが、広い画面で左右に大きな余白が
+     目立つとの指摘を受け撤廃。スマホでは元々画面幅いっぱいのため変化なし */
+  max-width: 100%;
   margin: 0 auto;
   min-height: 100vh;
   position: relative;
@@ -287,7 +288,7 @@ button { font-family: inherit; }
 
 /* ===== FOOTER NAV ===== */
 .footer-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; max-width: min(100vw, 820px); margin: 0 auto; z-index: 60;
+  position: fixed; bottom: 0; left: 0; right: 0; max-width: 100%; margin: 0 auto; z-index: 60;
   display: grid; grid-template-columns: repeat(8,1fr);
   background: rgba(10,0,24,.92); backdrop-filter: blur(12px);
   border-top: 2px solid rgba(255,61,175,.35);

@@ -28,20 +28,22 @@ export default function AppFooter() {
           style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.72rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
           💬 フィードバック
         </button>
-        <Link href="/oneshot" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>💥 一撃ゲットチャレンジ</Link>
-        <Link href="/championship" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>🏆 チャンピオン大会</Link>
-        <Link href="/sponsor" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>🤝 スポンサー募集</Link>
-        <Link href="/flyer" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>📣 フライヤー</Link>
-        <Link href="/privacy" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>プライバシーポリシー</Link>
-        <Link href="/tokutei" style={{ color: 'var(--muted)', fontSize: '.72rem' }}>特定商取引法</Link>
+        <Link href="/oneshot" prefetch={false} style={{ color: 'var(--muted)', fontSize: '.72rem' }}>💥 一撃ゲットチャレンジ</Link>
+        <Link href="/championship" prefetch={false} style={{ color: 'var(--muted)', fontSize: '.72rem' }}>🏆 チャンピオン大会</Link>
+        <Link href="/sponsor" prefetch={false} style={{ color: 'var(--muted)', fontSize: '.72rem' }}>🤝 スポンサー募集</Link>
+        <Link href="/flyer" prefetch={false} style={{ color: 'var(--muted)', fontSize: '.72rem' }}>📣 フライヤー</Link>
+        <Link href="/privacy" prefetch={false} style={{ color: 'var(--muted)', fontSize: '.72rem' }}>プライバシーポリシー</Link>
+        <Link href="/tokutei" prefetch={false} style={{ color: 'var(--muted)', fontSize: '.72rem' }}>特定商取引法</Link>
       </div>
       <p style={{ textAlign: 'center', color: 'var(--muted2)', fontSize: '.64rem', paddingBottom: 8 }}>© 2026 株式会社華</p>
 
+      {/* 常時viewport内の固定下部ナビのためprefetch無効化=CDNリクエスト削減、2026-11-04対応 */}
       <nav className="footer-nav">
         {nav.map(item => (
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={`nav-item${path === item.href ? ' active' : ''}`}>
             <span>{item.emoji}</span>{item.label}
           </Link>

@@ -29,7 +29,7 @@ function Card({ children }: { children: React.ReactNode }) {
 export default async function HowToPage() {
   const isIOSApp = isIOSAppRequest((await headers()).get('user-agent'));
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '0 0 96px', background: 'radial-gradient(120% 60% at 50% 0%,#260a52 0%,#0a0018 55%,#05000f 100%)' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '0 0 96px', background: 'radial-gradient(120% 60% at 50% 0%,#260a52 0%,#0a0018 55%,#05000f 100%)' }}>
 
       {/* PAGE HEADER */}
       <div style={{ padding: '28px 16px 0' }}>

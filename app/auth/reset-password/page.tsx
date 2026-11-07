@@ -41,14 +41,14 @@ export default function ResetPasswordPage() {
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
         <p style={{ color: 'var(--muted)' }}>Supabase設定後に有効になります。</p>
       </main>
     );
   }
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>🔑 新しいパスワードを設定</h1>
 
       {done ? (

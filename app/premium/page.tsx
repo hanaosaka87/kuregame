@@ -51,7 +51,7 @@ export default function PremiumPage() {
   }, [user]);
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4 }}>💎 クレゲーの会員プランについて</h1>
       {isIOSApp ? (
         <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 24 }}>

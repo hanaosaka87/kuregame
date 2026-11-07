@@ -460,7 +460,7 @@ export default function MyPage() {
 
   if (authLoading || loading) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>読み込み中...</div>
         <AppFooter />
       </main>
@@ -469,7 +469,7 @@ export default function MyPage() {
 
   if (!user) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4 }}>📊 マイ戦績</h1>
         <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 24 }}>これまでのチャレンジ結果を振り返れます</p>
         <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--card)', borderRadius: 16 }}>
@@ -565,7 +565,7 @@ export default function MyPage() {
   const displayedPoints = pointsOverride ?? profile?.points ?? 0;
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4 }}>📊 マイ戦績</h1>
       <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 16 }}>
         {profile?.nickname || 'あなた'}さんのこれまでの記録

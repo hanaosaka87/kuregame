@@ -56,12 +56,12 @@ export default function ChampionshipPage() {
   }, []);
 
   if (loading) {
-    return <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '60px 20px', textAlign: 'center', color: 'var(--muted)' }}>読み込み中...</main>;
+    return <main style={{ maxWidth: '100%', margin: '0 auto', padding: '60px 20px', textAlign: 'center', color: 'var(--muted)' }}>読み込み中...</main>;
   }
 
   if (!championship) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px', textAlign: 'center' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px', textAlign: 'center' }}>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 16 }}>🏆 全国統一チャンピオン大会</h1>
         <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 40, lineHeight: 1.7 }}>
           現在、開催予定の大会はありません。<br />決まり次第このページでお知らせします。
@@ -74,7 +74,7 @@ export default function ChampionshipPage() {
   const isLive = championship.status === 'live' || (remain && remain.d === 0 && remain.h === 0 && remain.m === 0 && remain.s === 0);
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>🏆 {championship.name}</h1>
       <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: 20 }}>
         全国の参加店舗が同じ日時に一斉スタート。各会場にはスタッフが派遣され、記録を確認します。

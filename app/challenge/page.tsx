@@ -502,7 +502,7 @@ function ChallengeContent() {
   // ===== STEP 1: チャレンジ選択 =====
   if (step === 'select') {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', marginBottom: 16, fontSize: '0.9rem' }}>← 戻る</button>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>🎯 チャレンジ選択</h1>
         <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: 24 }}>今回の投入上限金額を選んでください</p>
@@ -590,7 +590,7 @@ function ChallengeContent() {
   // ===== STEP 1.5: 対戦モード（部屋を作る／参加する） =====
   if (step === 'battle') {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
         <button onClick={() => setStep('select')} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', marginBottom: 16, fontSize: '0.9rem' }}>← 戻る</button>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>⚔️ 対戦モード</h1>
         <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: 24 }}>
@@ -685,7 +685,7 @@ function ChallengeContent() {
   // ===== STEP 2: 記録 =====
   if (step === 'record') {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 140px' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 140px' }}>
         <button onClick={() => setStep(challengeType === 'battle' ? 'battle' : 'select')} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', marginBottom: 16, fontSize: '0.9rem' }}>← 戻る</button>
 
         {battleRoom && (
@@ -953,7 +953,7 @@ function ChallengeContent() {
 
   // ===== STEP 3: ランキング登録 =====
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
       <button onClick={() => setStep('record')} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', marginBottom: 16, fontSize: '0.9rem' }}>← 戻る</button>
 
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>🏆 ランキング登録</h1>

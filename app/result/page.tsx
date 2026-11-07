@@ -94,7 +94,7 @@ function ResultContent() {
 
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
       {/* グレード */}
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: '3.5rem', marginBottom: 6 }}>{grade.emoji}</div>

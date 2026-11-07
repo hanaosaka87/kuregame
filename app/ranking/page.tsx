@@ -198,7 +198,7 @@ export default function RankingPage() {
   });
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '20px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '20px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4 }}>🏆 ランキング</h1>
       <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: 4 }}>元取り率で全国と競おう</p>
       <p style={{ color: 'var(--muted)', fontSize: '0.74rem', marginBottom: 12 }}>特別な参加登録は不要。チャレンジを記録すれば自動でランクインします</p>
@@ -363,7 +363,7 @@ export default function RankingPage() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: 'var(--bg)', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 'min(100vw, 820px)', maxHeight: '85vh', overflowY: 'auto', padding: '20px 20px 32px' }}
+            style={{ background: 'var(--bg)', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '20px 20px 32px' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 900, margin: 0 }}>📋 戦績詳細</h3>

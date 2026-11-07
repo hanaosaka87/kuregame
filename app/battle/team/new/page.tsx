@@ -51,7 +51,7 @@ export default function NewTeamBattlePage() {
   }
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
       <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', marginBottom: 16, fontSize: '0.9rem' }}>← 戻る</button>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>🤝 団体戦（3対3）を作る</h1>
       <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: 24, lineHeight: 1.6 }}>

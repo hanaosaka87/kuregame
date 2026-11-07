@@ -77,7 +77,7 @@ export default function TeamBattleResultPage() {
 
   if (loading) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '60px 20px', textAlign: 'center', color: 'var(--muted)' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '60px 20px', textAlign: 'center', color: 'var(--muted)' }}>
         読み込み中...
       </main>
     );
@@ -85,7 +85,7 @@ export default function TeamBattleResultPage() {
 
   if (notFound || !battle) {
     return (
-      <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px', textAlign: 'center' }}>
+      <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px', textAlign: 'center' }}>
         <p style={{ fontSize: '1rem', color: 'var(--muted)', marginTop: 40 }}>この団体戦コードは見つかりませんでした。</p>
         <AppFooter />
       </main>
@@ -108,7 +108,7 @@ export default function TeamBattleResultPage() {
   const aggB = teamAgg(teamBSessions);
 
   return (
-    <main style={{ maxWidth: 'min(100vw, 820px)', margin: '0 auto', padding: '24px 20px 100px' }}>
+    <main style={{ maxWidth: '100%', margin: '0 auto', padding: '24px 20px 100px' }}>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 6 }}>🤝 団体戦（3対3）</h1>
       <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: 20 }}>
         🏪 {battle.store_name}
